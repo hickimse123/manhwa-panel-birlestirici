@@ -49,7 +49,7 @@ Bu proje saf **HTML, JavaScript (ES6+) ve Tailwind CSS** kullanılarak geliştir
 
 ---
 
-![Uygulama Arayüzü](gruplama.webp)
+![Uygulama Arayüzü](gruplama)
 
 ---
 Created by **Hic Kimse** 🚀
