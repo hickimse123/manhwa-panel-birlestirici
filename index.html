@@ -2,622 +2,788 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Manhwa Panel Birleştirici & ZIP Paketleyici (V11 - Akıllı İsimlendirme)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanlation Toolkit V2 - Hiç Kimse</title>
+    <!-- Tailwind CSS, Lucide Icons & JSZip -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
-        :root {
-            --bg-main: #0f0f12;
-            --bg-card: #181820;
-            --bg-control: #1e1e26;
-            --accent-green: #00e676;
-            --accent-blue: #00b0ff;
-            --accent-orange: #ff9100;
-            --accent-red: #ff1744;
-            --text-main: #f5f5f7;
-            --text-sub: #8e8e93;
-        }
-
-        body { 
-            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--bg-main); 
-            color: var(--text-main); 
-            margin: 0;
-            padding: 30px 20px;
-            display: flex; 
-            flex-direction: column; 
-            min-height: 93vh; 
-        }
-
-        h1 { 
-            text-align: center; 
-            color: var(--text-main); 
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 5px; 
-            background: linear-gradient(135deg, #fff 0%, var(--text-sub) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle { 
-            text-align: center; 
-            color: var(--text-sub); 
-            margin-bottom: 30px; 
-            font-size: 14px; 
-        }
-
-        .container { max-width: 1300px; margin: 0 auto; flex: 1; width: 100%; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+        body { font-family: 'JetBrains+Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #111217; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ecec00; border-radius: 3px; }
         
-        .shortcuts-top { 
-            background: rgba(30, 30, 38, 0.6); 
-            backdrop-filter: blur(10px);
-            padding: 14px; 
-            border-radius: 12px; 
-            margin-bottom: 20px; 
-            font-size: 13px; 
-            color: #d1d1d6; 
-            display: flex; 
-            gap: 25px; 
-            justify-content: center; 
-            flex-wrap: wrap; 
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        .key { 
-            background: rgba(255, 255, 255, 0.1); 
-            color: #fff; 
-            padding: 3px 8px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            font-size: 12px; 
-            margin-right: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        /* Kontrol Paneli */
-        .controls { 
-            background: var(--bg-control); 
-            padding: 20px; 
-            border-radius: 14px; 
-            margin-bottom: 25px; 
-            display: flex; 
-            gap: 15px; 
-            align-items: center; 
-            flex-wrap: wrap;
-            border: 1px solid rgba(255,255,255,0.03);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
+        .text-custom-yellow { color: #ecec00; }
+        .bg-custom-yellow { background-color: #ecec00; }
+        .border-custom-yellow { border-color: #ecec00; }
+        .accent-custom-yellow { accent-color: #ecec00; }
 
-        /* Yeni İsimlendirme Input Alanları */
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-            min-width: 220px;
-        }
-        
-        .input-group label {
-            font-size: 11px;
-            color: var(--text-sub);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .text-input {
-            background: #121216;
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #fff;
-            padding: 11px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .text-input:focus {
-            border-color: var(--accent-blue);
-        }
-
-        input[type="file"] { display: none; }
-        
-        /* Butonlar */
-        .btn { 
-            color: white; 
-            padding: 12px 24px; 
-            border: none; 
-            border-radius: 10px; 
-            cursor: pointer; 
-            font-weight: 600; 
-            font-size: 14px; 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            height: 40px;
-            box-sizing: border-box;
-            margin-top: 16px; /* Inputların hizasına uyması için */
-        }
-        
-        .btn-upload { background: linear-gradient(135deg, #2ef784 0%, #00c853 100%); color: #000; }
-        .btn-upload:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,230,118,0.3); }
-        
-        .btn-group { background: linear-gradient(135deg, var(--accent-blue) 0%, #0091ea 100%); }
-        .btn-group:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,176,255,0.3); }
-        
-        .btn-download { background: linear-gradient(135deg, var(--accent-orange) 0%, #ff6d00 100%); }
-        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,145,0,0.3); }
-        
-        .btn-clear { background: rgba(255, 23, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 23, 68, 0.2); margin-left: auto; }
-        .btn-clear:hover { background: var(--accent-red); color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,23,68,0.3); }
-        
-        /* Izgara Düzeni ve Kartlar */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 20px; 
-            background: var(--bg-control); 
-            padding: 25px; 
-            border-radius: 16px; 
-            min-height: 250px;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
-
-        .img-card { 
-            background: var(--bg-card); 
-            padding: 10px; 
-            border-radius: 12px; 
-            text-align: center; 
-            cursor: pointer; 
-            user-select: none; 
-            border: 2px solid transparent; 
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .img-card img { 
-            max-width: 100%; 
-            max-height: 140px; 
-            object-fit: contain; 
-            border-radius: 8px; 
-        }
-
-        .img-card p { 
-            margin: 8px 0 2px 0; 
-            font-size: 11px; 
-            font-weight: 500;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            color: #aeaea3; 
-        }
-        
-        .img-card.focused { 
-            border-color: var(--accent-blue) !important; 
-            transform: translateY(-4px); 
-            box-shadow: 0 8px 25px rgba(0, 176, 255, 0.4); 
-            z-index: 2; 
-        }
-        
-        .img-card.selected { 
-            border-color: #ffffff !important; 
-            background: #2c2c38;
-            transform: scale(1.03); 
-            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
-        }
-
-        .badge { 
-            display: inline-block; 
-            font-size: 10px; 
-            font-weight: 700; 
-            margin-top: 6px; 
-            padding: 3px 8px; 
-            border-radius: 6px; 
-            background: rgba(0,0,0,0.5); 
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        /* DİNAMİK POP-UP & PROGRESS BAR TASARIMI */
-        .progress-overlay { 
-            display: none; 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: rgba(5, 5, 8, 0.85); 
-            backdrop-filter: blur(8px);
-            z-index: 9999; 
-            justify-content: center; 
-            align-items: center; 
-        }
-
-        .progress-modal { 
-            background: #1c1c24; 
-            padding: 35px; 
-            border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.08); 
-            width: 420px; 
-            text-align: center; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
-        }
-
-        .progress-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--accent-green); }
-        .progress-status { font-size: 13px; color: var(--text-sub); margin-bottom: 25px; height: 18px; }
-        
-        .progress-bg { 
-            background: #0d0d11; 
-            width: 100%; 
-            height: 12px; 
-            border-radius: 6px; 
-            overflow: hidden; 
-            border: 1px solid rgba(255,255,255,0.05); 
-            margin-bottom: 15px; 
-            position: relative; 
-        }
-
-        .progress-bar { 
-            background: linear-gradient(90deg, #00e676, #b9f6ca); 
-            width: 0%; 
-            height: 100%; 
-            border-radius: 6px;
-            transition: width 0.1s ease; 
-        }
-
-        .progress-percent { font-size: 26px; font-weight: 800; color: #fff; }
-
-        /* KREASYON İMZASI STİLİ */
-        .footer { 
-            text-align: center; 
-            color: #444452; 
-            font-size: 12px; 
-            margin-top: 50px; 
-            margin-bottom: 10px; 
-            font-style: italic; 
-            letter-spacing: 1px; 
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-        .footer:hover { color: var(--accent-blue); }
-
-        /* Grup Renkleri */
-        .g-color-1 { background-color: #1b3d24 !important; border-color: var(--accent-green) !important; }
-        .g-color-2 { background-color: #16325c !important; border-color: var(--accent-blue) !important; }
-        .g-color-3 { background-color: #5c4308 !important; border-color: var(--accent-orange) !important; }
-        .g-color-4 { background-color: #541031 !important; border-color: #ff4081 !important; }
-        .g-color-5 { background-color: #310d54 !important; border-color: #e040fb !important; }
-        .g-color-6 { background-color: #064042 !important; border-color: #00e5ff !important; }
-        .g-color-7 { background-color: #381e18 !important; border-color: #ff6e40 !important; }
+        .gc-1 { background-color: rgba(236, 236, 0, 0.08) !important; border-color: #ecec00 !important; color: #ecec00 !important; }
+        .gc-2 { background-color: rgba(57, 255, 24, 0.08) !important; border-color: #39ff14 !important; color: #39ff14 !important; }
+        .gc-3 { background-color: rgba(255, 157, 0, 0.08) !important; border-color: #ff9d00 !important; color: #ff9d00 !important; }
+        .gc-4 { background-color: rgba(255, 0, 127, 0.08) !important; border-color: #ff007f !important; color: #ff007f !important; }
+        .gc-5 { background-color: rgba(189, 0, 255, 0.08) !important; border-color: #bd00ff !important; color: #bd00ff !important; }
     </style>
 </head>
-<body>
+<body class="bg-[#07080a] text-gray-200 h-screen flex flex-col overflow-hidden select-none relative">
 
-<div class="container">
-    <h1>Manhwa Panel Birleştirici</h1>
-    <div class="subtitle">Panelleri Grupla, Dikey Birleştir ve Tek Tıkla ZIP Olarak İndir</div>
+    <!-- ÜST BAR -->
+    <header class="bg-[#111217] border-b border-gray-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-[#ecec00]/10 border border-custom-yellow flex items-center justify-center">
+                <i data-lucide="terminal" class="text-custom-yellow w-4 h-4"></i>
+            </div>
+            <div>
+                <h1 class="text-xs font-bold tracking-wider text-custom-yellow">SCANLATION TOOLKIT // V2</h1>
+                <p class="text-[9px] text-gray-500 font-bold">DEVELOPED BY HIÇ KIMSE</p>
+            </div>
+        </div>
+
+        <!-- 5 BÜYÜK SEKME -->
+        <div class="flex flex-wrap gap-1.5">
+            <button onclick="changeEngine('merger')" id="tab-merger" class="px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-[#ecec00]/10 border-custom-yellow text-custom-yellow">
+                <i data-lucide="link" class="w-3.5 h-3.5"></i> PANEL BİRLEŞTİRİCİ
+            </button>
+            <button onclick="changeEngine('splitter')" id="tab-splitter" class="px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-gray-900 border-gray-800 text-gray-400 hover:text-white">
+                <i data-lucide="scissors" class="w-3.5 h-3.5"></i> DİKEY AYIRICI
+            </button>
+            <button onclick="changeEngine('converter')" id="tab-converter" class="px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-gray-900 border-gray-800 text-gray-400 hover:text-white">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> DÖNÜŞTÜRÜCÜ & LEVELS
+            </button>
+            <button onclick="changeEngine('renamer')" id="tab-renamer" class="px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-gray-900 border-gray-800 text-gray-400 hover:text-white">
+                <i data-lucide="binary" class="w-3.5 h-3.5"></i> ARDIL ADLANDIRICI
+            </button>
+            <button onclick="changeEngine('watermark')" id="tab-watermark" class="px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-gray-900 border-gray-800 text-gray-400 hover:text-white">
+                <i data-lucide="image" class="w-3.5 h-3.5"></i> WATERMARK MOTORU
+            </button>
+        </div>
+
+        <div class="text-right font-mono text-[10px] text-gray-500 hidden xl:block">
+            OTOMATİK KAYIT: <span id="save-status" class="text-emerald-400 font-bold">AKTİF</span>
+        </div>
+    </header>
+
+    <!-- ANA ÇALIŞMA ALANI -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- SOL KONTROL PANELİ -->
+        <aside class="w-80 bg-[#111217]/90 border-r border-gray-800 p-4 flex flex-col justify-between overflow-y-auto custom-scrollbar">
+            
+            <div class="space-y-4">
+                <!-- SİSTEM KISAYOLLARI KILAVUZU -->
+                <div class="p-3 bg-gray-950 rounded border border-gray-800 text-[10px] text-gray-400 space-y-1">
+                    <div class="text-custom-yellow font-bold flex items-center gap-1 mb-1"><i data-lucide="command" class="w-3 h-3"></i> SİSTEM KISAYOLLARI:</div>
+                    <p>• Aralığı seçmek için <kbd class="bg-gray-800 px-1 text-white">Shift+Tık</kbd> yapın.</p>
+                    <p>• Seçilenleri gruplamak için <kbd class="bg-gray-800 px-1 text-white">G</kbd> tuşuna basın.</p>
+                    <p>• Geri almak için <kbd class="bg-gray-800 px-1 text-white">Ctrl+Z</kbd> basın.</p>
+                </div>
+
+                <!-- KAYNAK YÜKLEME KUTUSU -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">KAYNAK RAW GÖRSELLERİ</label>
+                    <label class="w-full h-10 border border-dashed border-gray-700 hover:border-custom-yellow bg-gray-950 rounded flex items-center justify-center gap-2 text-xs text-gray-400 cursor-pointer transition-colors">
+                        <i data-lucide="upload-cloud" class="w-4 h-4 text-custom-yellow"></i>
+                        <span>RAW Dosyalarını Seçin</span>
+                        <input type="file" id="universal-loader" multiple accept="image/*" class="hidden" onchange="processFiles(event)">
+                    </label>
+                </div>
+
+                <!-- 1. PANEL: BİRLEŞTİRİCİ AYARLARI -->
+                <div id="core-merger" class="engine-settings space-y-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">ÇIKTI ZIP ADI</label>
+                        <input type="text" id="mZipName" placeholder="birlesmis_bolum_panelleri" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+                    </div>
+                    <button onclick="buildGroup()" class="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded text-xs flex items-center justify-center gap-1.5 border border-gray-700">
+                        <i data-lucide="folder-plus" class="w-3.5 h-3.5 text-custom-yellow"></i> Seçilenleri Grupla (G)
+                    </button>
+                    <button onclick="compileMerger()" class="w-full bg-custom-yellow hover:bg-[#d0d000] text-gray-950 font-bold py-2.5 px-3 rounded text-xs flex items-center justify-center gap-1.5 shadow-md">
+                        <i data-lucide="zap" class="w-4 h-4"></i> DERLE VE BİRLEŞTİR (Z)
+                    </button>
+                </div>
+
+                <!-- 2. PANEL: AYIRICI AYARLARI -->
+                <div id="core-splitter" class="engine-settings space-y-4 hidden">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">PARÇA YÜKSEKLİĞİ (PX)</label>
+                        <input type="number" id="sHeight" value="3000" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">ÇIKTI ZIP ADI</label>
+                        <input type="text" id="sZipName" placeholder="dilimlenmis_webtoon_bolumu" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+                    </div>
+                    <button onclick="compileSplitter()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-2.5 px-3 rounded text-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="scissors" class="w-4 h-4"></i> DİLİMLE VE ZIP YAP
+                    </button>
+                </div>
+
+                <!-- 3. PANEL: DÖNÜŞTÜRÜCÜ & LEVELS AYARLARI -->
+                <div id="core-converter" class="engine-settings space-y-4 hidden">
+    <div class="p-3 bg-gray-950 border border-gray-800 rounded space-y-2">
+        <div class="text-custom-yellow font-bold text-[10px] flex justify-between">
+            <span>RAW LEVELS (RENK KORUMALI)</span>
+            <button onclick="resetLevels()" class="text-[9px] text-red-400 hover:text-red-300 underline">SIFIRLA</button>
+        </div>
+        <div>
+            <label class="text-[9px] text-gray-400 block">Siyah Nokta (Koyu Gölgeler):</label>
+            <input type="range" id="lvlBlack" min="0" max="100" value="0" class="w-full accent-custom-yellow" oninput="updateLivePreview()">
+        </div>
+        <div>
+            <label class="text-[9px] text-gray-400 block">Beyaz Nokta (Arka Plan Kirleri):</label>
+            <input type="range" id="lvlWhite" min="150" max="255" value="255" class="w-full accent-custom-yellow" oninput="updateLivePreview()">
+        </div>
+    </div>
     
-    <div class="shortcuts-top">
-        <div><span class="key">Mouse Tık</span> Başlangıç Seç (Beyaz)</div>
-        <div><span class="key">Mouse Gezdirme</span> Bitiş Noktası (<span style="color:var(--accent-blue); font-weight:bold;">Mavi Parlama</span>)</div>
-        <div><span class="key">Shift + Space</span> Aralığı Komple Kapat</div>
-        <div><span class="key">G</span> Grup Yap</div>
-        <div><span class="key">Z</span> Birleştir ve ZIP İndir</div>
-        <div><span class="key">C</span> Sıfırla</div>
+    <div class="space-y-1.5">
+        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">HEDEF FORMAT</label>
+        <select id="cTargetFormat" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+            <option value="image/jpeg">JPEG (.jpg) -> Beyaz Fon Korumalı</option>
+            <option value="image/webp">WebP (.webp)</option>
+            <option value="image/png">PNG (.png)</option>
+        </select>
     </div>
-
-    <div class="controls">
-        <label class="btn btn-upload">
-            Görselleri Seç
-            <input type="file" id="fileInput" multiple accept="image/*">
-        </label>
-        
-        <button class="btn btn-group" id="btnGroup">Seçilenleri Grup Yap (G)</button>
-
-        <!-- YENİ ZIP İSMİ INPUT ALANI -->
-        <div class="input-group">
-            <label for="zipNameInput">ZIP Dosya Adı</label>
-            <input type="text" id="zipNameInput" class="text-input" placeholder="manhwa_bolumleri">
-        </div>
-
-        <!-- YENİ KLASÖR ADI INPUT ALANI -->
-        <div class="input-group">
-            <label for="folderNameInput">ZIP İçi Klasör Adı (Opsiyonel)</label>
-            <input type="text" id="folderNameInput" class="text-input" placeholder="Direkt kök dizine çıkar">
-        </div>
-
-        <button class="btn btn-download" id="btnExport">Birleştir ve ZIP (Z)</button>
-        <button class="btn btn-clear" id="btnClear">Sıfırla (C)</button>
+    <div class="space-y-1.5">
+        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">ÇIKTI ZIP ADI</label>
+        <input type="text" id="cZipName" placeholder="donusturulmus_sayfalar" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
     </div>
-
-    <div class="grid" id="imageGrid"></div>
+    <button onclick="compileConverter()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-3 rounded text-xs flex items-center justify-center gap-1.5">
+        <i data-lucide="refresh-cw" class="w-4 h-4"></i> TEMİZLE VE DÖNÜŞTÜR
+    </button>
 </div>
 
-<div class="progress-overlay" id="progressOverlay">
-    <div class="progress-modal">
-        <div class="progress-title" id="pTitle">Dosyalar Hazırlanıyor...</div>
-        <div class="progress-status" id="pStatus">İşlem başlatılıyor...</div>
-        <div class="progress-bg">
-            <div class="progress-bar" id="pBar"></div>
-        </div>
-        <div class="progress-percent" id="pPercent">%0</div>
+                <!-- 4. PANEL: ADLANDIRICI AYARLARI -->
+                <div id="core-renamer" class="engine-settings space-y-4 hidden">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-gray-400 tracking-wider uppercase">BASAMAK YAPISI</label>
+                        <select id="rPadding" class="w-full bg-[#181a22] border border-gray-700 rounded p-2 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+                            <option value="3">3 Basamaklı (001...)</option>
+                            <option value="2">2 Basamaklı (01...)</option>
+                            <option value="4">4 Basamaklı (0001...)</option>
+                        </select>
+                    </div>
+                    <button onclick="compileRenamer()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-2.5 px-3 rounded text-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="binary" class="w-4 h-4"></i> YENİDEN İNDEKSLE
+                    </button>
+                </div>
+
+                <!-- 5. PANEL: WATERMARK MOTORU -->
+                <div id="core-watermark" class="engine-settings space-y-4 hidden">
+                    <div class="p-3 bg-gray-950 rounded border border-gray-800 space-y-3">
+                        <div class="text-custom-yellow font-bold text-[10px] flex items-center gap-1"><i data-lucide="shield-check" class="w-3 h-3"></i> LOGO ENJEKTÖRÜ</div>
+                        
+                        <label class="w-full h-12 border border-dashed border-gray-800 hover:border-custom-yellow bg-[#111217] rounded flex flex-col items-center justify-center gap-1 text-[10px] text-gray-400 cursor-pointer transition-colors">
+                            <i data-lucide="file-plus" class="w-3.5 h-3.5 text-custom-yellow"></i>
+                            <span id="wm-label">Logo Seç (PNG/Transparan)</span>
+                            <input type="file" id="watermark-loader" accept="image/*" class="hidden" onchange="loadWatermark(event)">
+                        </label>
+
+                        <div class="space-y-2 pt-1 border-t border-gray-900">
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">Opasite Seviyesi (%):</label>
+                                <input type="number" id="wmOpacity" value="35" min="0" max="100" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs focus:outline-none focus:border-custom-yellow" oninput="updateLivePreview()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">Damgalama Düzeni:</label>
+                                <select id="wmMode" onchange="toggleWatermarkSubSettings(); updateLivePreview();" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs focus:outline-none focus:border-custom-yellow">
+                                    <option value="center">Tam Sayfa Ortala</option>
+                                    <option value="repeat">Dikey Periyodik (Sıralı Tekrar)</option>
+                                </select>
+                            </div>
+                            
+                            <div id="wm-repeat-interval-box" class="hidden">
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">Dikey Tekrar Aralığı (PX):</label>
+                                <input type="number" id="wmInterval" value="2000" min="500" max="10000" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs focus:outline-none focus:border-custom-yellow" oninput="updateLivePreview()">
+                            </div>
+
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">Yatay Hizalama (X Ekseni):</label>
+                                <select id="wmAlignX" onchange="toggleMarginBox(); updateLivePreview();" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs focus:outline-none focus:border-custom-yellow">
+                                    <option value="center">Tam Ortala</option>
+                                    <option value="left">Sola Yasla</option>
+                                    <option value="right">Sağa Yasla</option>
+                                </select>
+                            </div>
+
+                            <div id="wm-margin-box" class="hidden">
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">Kenar Boşluğu (Margin PX):</label>
+                                <input type="number" id="wmMargin" value="40" min="0" max="500" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs focus:outline-none focus:border-custom-yellow" oninput="updateLivePreview()">
+                            </div>
+
+                            <div class="pt-1">
+                                <label class="text-[10px] text-gray-400 font-bold block mb-1">ÇIKTI ZIP ADI</label>
+                                <input type="text" id="wZipName" placeholder="watermarkli_sayfalar" class="w-full bg-[#181a22] border border-gray-700 rounded p-1.5 text-xs text-gray-200 focus:outline-none focus:border-custom-yellow">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="compileWatermarkOnly()" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2.5 px-3 rounded text-xs flex items-center justify-center gap-1.5 shadow-md">
+                        <i data-lucide="image" class="w-4 h-4"></i> WATERMARK BAS VE ZIP YAP
+                    </button>
+                </div>
+            </div>
+
+            <!-- RESET -->
+            <div class="pt-4 border-t border-gray-800">
+                <button onclick="wipeCore()" class="w-full text-center py-2 text-xs font-bold text-red-400 bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 rounded transition-colors">
+                    Havuz Matrisini Sıfırla
+                </button>
+            </div>
+        </aside>
+
+        <!-- SAĞ MATRİX IŞIK MASASI -->
+        <main class="flex-1 flex flex-col bg-[#0b0c10] relative">
+            <div class="p-3 bg-[#111217]/50 border-b border-gray-800 flex items-center justify-between text-xs font-mono">
+                <span id="file-count-badge" class="text-gray-400">Havuz Durumu: <strong class="text-custom-yellow">0 RAW Dosya</strong></span>
+                <span class="text-gray-600">| Mod: <strong id="current-mode-lbl" class="text-custom-yellow uppercase">merger</strong></span>
+            </div>
+
+            <!-- STANDART WORKSPACE GRID & MODAL ALANI -->
+            <div class="flex-1 overflow-hidden flex relative">
+                <div id="masterGrid" class="flex-1 overflow-y-auto custom-scrollbar p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2.5 content-start">
+                    <!-- Dinamik Grid Kutuları -->
+                </div>
+
+                <!-- ÖN İZLEME EKRANI (SAĞ TARAFA DOĞRU AÇILIR) -->
+                <div id="previewSidebar" class="w-96 bg-[#111217] border-l border-gray-800 flex flex-col hidden h-full z-10">
+                    <div class="p-3 border-b border-gray-800 flex items-center justify-between bg-gray-950">
+                        <span class="text-xs font-bold text-custom-yellow font-mono tracking-wider flex items-center gap-1"><i data-lucide="eye" class="w-3.5 h-3.5"></i> CANLI SİMÜLASYON</span>
+                        <button onclick="closePreviewSidebar()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-black/60 flex flex-col items-center justify-start">
+                        <div id="preview-canvas-container" class="border border-gray-800 rounded bg-[#0a0a0d] p-2 max-w-full shadow-2xl">
+                            <canvas id="livePreviewCanvas" class="max-w-full h-auto rounded block"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
 
-<div class="footer">
-    Hic Kimse tarafından oluşturuldu
-</div>
+    <!-- SAĞ ALT KÖŞEYE SABİTLENEN YÜZEN ÖN İZLEME BUTONU -->
+    <button onclick="toggleLivePreviewSidebar()" class="fixed bottom-10 right-6 z-30 bg-amber-500 hover:bg-amber-600 text-gray-950 font-bold p-3.5 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-105 active:scale-95 group" title="Canlı Ön İzleme Panelini Aç/Kapat">
+        <i data-lucide="eye" class="w-5 h-5"></i>
+        <span class="max-w-0 overflow-hidden group-hover:max-w-xs group-hover:ml-2 transition-all duration-300 ease-out text-xs font-mono whitespace-nowrap">ÖN İZLEME PANELİ</span>
+    </button>
 
-<script>
-    let filesArray = [];
-    let selectedIndices = [];
-    let groups = [];
-    let currentGroupId = 1;
-    let focusedIndex = 0;
-    let lastSelectedIndex = null;
+    <!-- OVERLAY -->
+    <div id="matrixOverlay" class="fixed inset-0 bg-black/85 backdrop-filter backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-[#111217] border border-custom-yellow/40 p-6 rounded-lg w-96 text-center font-mono">
+            <div id="mTitle" class="text-xs font-bold text-custom-yellow uppercase tracking-widest mb-1">SİSTEM YÜRÜTÜLÜYOR...</div>
+            <div id="mStatus" class="text-[10px] text-gray-500 truncate mb-4">Pipeline işleniyor...</div>
+            <div class="w-full bg-gray-950 h-1.5 rounded-full overflow-hidden border border-gray-800 mb-2">
+                <div id="mBar" class="bg-custom-yellow h-full w-0 transition-all duration-100"></div>
+            </div>
+            <div id="mPercent" class="text-xl font-black text-white">%0</div>
+        </div>
+    </div>
 
-    const fileInput = document.getElementById('fileInput');
-    const imageGrid = document.getElementById('imageGrid');
-    const btnGroup = document.getElementById('btnGroup');
-    const btnExport = document.getElementById('btnExport');
-    const btnClear = document.getElementById('btnClear');
-    const zipNameInput = document.getElementById('zipNameInput');
-    const folderNameInput = document.getElementById('folderNameInput');
+    <footer class="bg-[#0b0c10] border-t border-gray-900 text-center py-2 text-[10px] text-gray-600 font-mono">
+        SİSTEM DURUMU: OPERASYONEL // ENGINE DEVELOPER: HIÇ KIMSE
+    </footer>
 
-    const progressOverlay = document.getElementById('progressOverlay');
-    const pStatus = document.getElementById('pStatus');
-    const pBar = document.getElementById('pBar');
-    const pPercent = document.getElementById('pPercent');
-    const pTitle = document.getElementById('pTitle');
+    <script>
+        let masterData = [];
+        let selectedIndices = [];
+        let designGroups = [];
+        let currentGroupCounter = 1;
+        let lastSelectedIndex = null;
+        let engineActiveMode = 'merger';
+        let watermarkImgData = null;
+        let historyStack = [];
 
-    function naturalSort(a, b) {
-        const ax = [], bx = [];
-        a.name.replace(/(\d+)|(\D+)/g, function(_, $1, $2) { ax.push([$1 || Infinity, $2 || ""]); });
-        b.name.replace(/(\d+)|(\D+)/g, function(_, $1, $2) { bx.push([$1 || Infinity, $2 || ""]); });
-        while(ax.length && bx.length) {
-            const an = ax.shift(); const bn = bx.shift();
-            const nn = (an[0] - bn[0]) || an[1].localeCompare(bn[1]);
-            if(nn) return nn;
-        }
-        return ax.length - bx.length;
-    }
+        lucide.createIcons();
 
-    fileInput.addEventListener('change', (e) => {
-        const files = Array.from(e.target.files);
-        let loadedCount = 0;
-        filesArray = []; selectedIndices = []; groups = []; currentGroupId = 1; focusedIndex = 0; lastSelectedIndex = null;
-        
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                filesArray.push({ name: file.name, src: event.target.result, groupId: null });
-                loadedCount++;
-                if (loadedCount === files.length) {
-                    filesArray.sort(naturalSort);
-                    renderGrid();
+        // LOCAL AUTO-SAVE KURTARMA
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedState = localStorage.getItem('scanlation_toolkit_autosave');
+            if (savedState) {
+                try {
+                    const parsed = JSON.parse(savedState);
+                    masterData = parsed.masterData || [];
+                    designGroups = parsed.designGroups || [];
+                    currentGroupCounter = parsed.currentGroupCounter || 1;
+                    watermarkImgData = parsed.watermarkImgData || null;
+                    if(watermarkImgData) {
+                        document.getElementById('wm-label').innerText = "Logo Hafızada Kayıtlı";
+                    }
+                    renderWorkspace();
+                    triggerAutoSaveStatus("KURTARILDI");
+                } catch(e) {
+                    console.error("Kurtarma matrisi okunamadı.");
                 }
+            }
+            toggleWatermarkSubSettings();
+            toggleMarginBox();
+        });
+
+        function autoSaveState() {
+            const state = {
+                masterData: masterData,
+                designGroups: designGroups,
+                currentGroupCounter: currentGroupCounter,
+                watermarkImgData: watermarkImgData
+            };
+            localStorage.setItem('scanlation_toolkit_autosave', JSON.stringify(state));
+            triggerAutoSaveStatus("KAYDEDİLDİ");
+        }
+
+        function triggerAutoSaveStatus(text) {
+            const badge = document.getElementById('save-status');
+            if (badge) {
+                badge.innerText = text;
+                badge.className = "text-amber-400 font-bold";
+                setTimeout(() => { badge.innerText = "AKTİF"; badge.className = "text-emerald-400 font-bold"; }, 1200);
+            }
+        }
+
+        function saveHistorySnapshot() {
+            if (historyStack.length > 25) historyStack.shift();
+            historyStack.push(JSON.stringify({
+                masterData: masterData,
+                selectedIndices: selectedIndices,
+                designGroups: designGroups,
+                currentGroupCounter: currentGroupCounter
+            }));
+        }
+
+        function changeEngine(targetMode) {
+            engineActiveMode = targetMode;
+            document.getElementById('current-mode-lbl').innerText = targetMode;
+            document.querySelectorAll('header button').forEach(b => {
+                b.className = "px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-gray-900 border-gray-800 text-gray-400 hover:text-white";
+            });
+            document.getElementById(`tab-${targetMode}`).className = "px-3 py-1.5 rounded text-xs font-bold transition-all border flex items-center gap-1.5 bg-[#ecec00]/10 border-custom-yellow text-custom-yellow";
+            document.querySelectorAll('.engine-settings').forEach(panel => panel.classList.add('hidden'));
+            document.getElementById(`core-${targetMode}`).classList.remove('hidden');
+            
+            // Eğer ön izleme paneli açıksa modu değiştirince orayı da tazele
+            updateLivePreview();
+        }
+
+        function toggleWatermarkSubSettings() {
+            const mode = document.getElementById('wmMode').value;
+            const box = document.getElementById('wm-repeat-interval-box');
+            if(mode === 'repeat') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        function toggleMarginBox() {
+            const align = document.getElementById('wmAlignX').value;
+            const box = document.getElementById('wm-margin-box');
+            if(align === 'left' || align === 'right') box.classList.remove('hidden');
+            else box.classList.add('hidden');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                if (historyStack.length === 0) return;
+                const snapshot = JSON.parse(historyStack.pop());
+                masterData = snapshot.masterData;
+                selectedIndices = snapshot.selectedIndices;
+                designGroups = snapshot.designGroups;
+                currentGroupCounter = snapshot.currentGroupCounter;
+                lastSelectedIndex = null;
+                renderWorkspace();
+                autoSaveState();
+            }
+            if (masterData.length === 0) return;
+            let key = e.key.toLowerCase();
+            if (key === 'g' && engineActiveMode === 'merger') { e.preventDefault(); buildGroup(); }
+            else if (key === 'z' && engineActiveMode === 'merger') { e.preventDefault(); compileMerger(); }
+        });
+
+        function processFiles(event) {
+            const uploadedFiles = Array.from(event.target.files);
+            if (uploadedFiles.length === 0) return;
+            saveHistorySnapshot();
+
+            let loadedTrack = 0;
+            masterData = []; selectedIndices = []; designGroups = []; currentGroupCounter = 1; lastSelectedIndex = null;
+            showMatrixProgress("MATRİS_YÜKLENİYOR", "RAW veriler belleğe işleniyor...", 20);
+
+            uploadedFiles.forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    masterData.push({ name: file.name, src: e.target.result, assignedGroup: null });
+                    loadedTrack++;
+                    if (loadedTrack === uploadedFiles.length) {
+                        masterData.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+                        document.getElementById('matrixOverlay').classList.add('hidden');
+                        renderWorkspace();
+                        autoSaveState();
+                        updateLivePreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadWatermark(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                watermarkImgData = e.target.result;
+                document.getElementById('wm-label').innerText = "Logo Hazır ve Aktif";
+                autoSaveState();
+                updateLivePreview();
             };
             reader.readAsDataURL(file);
-        });
-    });
+        }
 
-    function renderGrid() {
-        imageGrid.innerHTML = '';
-        filesArray.forEach((item, index) => {
-            const card = document.createElement('div');
-            card.className = 'img-card';
-            
-            if (item.groupId) {
-                const colorNum = ((item.groupId - 1) % 7) + 1;
-                card.classList.add(`g-color-${colorNum}`);
-            }
-            if (selectedIndices.includes(index)) card.classList.add('selected');
-            if (index === focusedIndex && filesArray.length > 0 && !selectedIndices.includes(index)) {
-                card.classList.add('focused');
-            }
+        function renderWorkspace() {
+            const grid = document.getElementById('masterGrid');
+            grid.innerHTML = '';
+            document.getElementById('file-count-badge').innerHTML = `Havuz Durumu: <strong class="text-custom-yellow">${masterData.length} RAW Dosya</strong>`;
 
-            card.innerHTML = `
-                <img src="${item.src}">
-                <p title="${item.name}">${item.name}</p>
-                ${item.groupId ? `<span class="badge">Grup ${item.groupId}</span>` : ''}
-            `;
+            masterData.forEach((item, idx) => {
+                const isSelected = selectedIndices.includes(idx);
+                const hasGroup = item.assignedGroup !== null;
+                const card = document.createElement('div');
+                card.className = 'bg-[#121319] border border-gray-800 rounded p-1.5 text-center cursor-pointer relative group transition-all hover:border-gray-700';
+                
+                if (hasGroup) card.classList.add(`gc-${((item.assignedGroup - 1) % 5) + 1}`);
+                if (isSelected) card.className += ' border-white/80 bg-gray-800/50';
 
-            card.addEventListener('click', () => {
-                if (item.groupId) return;
-                focusedIndex = index;
-                toggleSelect(index);
-                renderGrid();
+                card.innerHTML = `
+                    <div class="w-full aspect-[3/4] bg-black/40 rounded flex items-center justify-center overflow-hidden mb-1 relative">
+                        <img src="${item.src}" class="max-w-full max-h-24 object-contain pointer-events-none">
+                    </div>
+                    <p class="text-[9px] font-mono text-gray-500 truncate" title="${item.name}">${item.name}</p>
+                    ${hasGroup ? `<span class="inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-1 bg-black/40 border border-white/5">GRUP ${item.assignedGroup}</span>` : ''}
+                    <div class="absolute top-1 left-1 bg-black/70 px-1 text-[8px] rounded font-mono text-gray-400 border border-gray-800">${idx + 1}</div>
+                `;
+                card.addEventListener('click', (e) => handleCardClick(e, idx));
+                grid.appendChild(card);
             });
+        }
 
-            card.addEventListener('mouseover', () => {
-                if (!item.groupId && focusedIndex !== index) {
-                    focusedIndex = index;
-                    updateFocusStyles();
+        function handleCardClick(e, idx) {
+            if (engineActiveMode !== 'merger' || masterData[idx].assignedGroup) return;
+            saveHistorySnapshot();
+
+            if (e.shiftKey && lastSelectedIndex !== null) {
+                selectedIndices = [];
+                const start = Math.min(lastSelectedIndex, idx);
+                const end = Math.max(lastSelectedIndex, idx);
+                for (let i = start; i <= end; i++) {
+                    if (!masterData[i].assignedGroup) selectedIndices.push(i);
                 }
-            });
-
-            imageGrid.appendChild(card);
-        });
-    }
-
-    function updateFocusStyles() {
-        const cards = imageGrid.querySelectorAll('.img-card');
-        cards.forEach((card, index) => {
-            if (index === focusedIndex && !selectedIndices.includes(index)) {
-                card.classList.add('focused');
             } else {
-                card.classList.remove('focused');
+                if (selectedIndices.includes(idx)) selectedIndices = selectedIndices.filter(i => i !== idx);
+                else selectedIndices.push(idx);
+                lastSelectedIndex = idx;
             }
-        });
-    }
-
-    function toggleSelect(index) {
-        if (filesArray[index].groupId) return;
-        if (selectedIndices.includes(index)) {
-            selectedIndices = selectedIndices.filter(i => i !== index);
-            if (lastSelectedIndex === index) lastSelectedIndex = null;
-        } else {
-            selectedIndices.push(index);
-            lastSelectedIndex = index;
+            renderWorkspace();
+            autoSaveState();
         }
-    }
 
-    function handleShiftSelect(endIndex) {
-        let start = Math.min(lastSelectedIndex, endIndex);
-        let end = Math.max(lastSelectedIndex, endIndex);
-        for (let i = start; i <= end; i++) {
-            if (!filesArray[i].groupId && !selectedIndices.includes(i)) {
-                selectedIndices.push(i);
+        function buildGroup() {
+            if (selectedIndices.length === 0) return;
+            saveHistorySnapshot();
+            selectedIndices.sort((a, b) => a - b);
+            selectedIndices.forEach(i => { masterData[i].assignedGroup = currentGroupCounter; });
+            designGroups.push({ id: currentGroupCounter, mapping: [...selectedIndices] });
+            currentGroupCounter++;
+            selectedIndices = [];
+            lastSelectedIndex = null;
+            renderWorkspace();
+            autoSaveState();
+        }
+
+        function showMatrixProgress(title, log, ratio) {
+            document.getElementById('matrixOverlay').classList.remove('hidden');
+            document.getElementById('mTitle').innerText = title;
+            document.getElementById('mStatus').innerText = log;
+            document.getElementById('mBar').style.width = `${ratio}%`;
+            document.getElementById('mPercent').innerText = `%${ratio}`;
+        }
+
+        // ================= CANLI ÖN İZLEME MOTORU =================
+        function toggleLivePreviewSidebar() {
+            if(masterData.length === 0) { alert("Havuzda resim yok, neyi ön izleyeceksin kanka?"); return; }
+            
+            const sidebar = document.getElementById('previewSidebar');
+            if (sidebar.classList.contains('hidden')) {
+                sidebar.classList.remove('hidden');
+                updateLivePreview();
+            } else {
+                sidebar.classList.add('hidden');
             }
         }
-    }
 
-    function makeGroup() {
-        if (selectedIndices.length === 0) return alert('Önce resim seç kanka!');
-        selectedIndices.sort((a, b) => a - b);
-        selectedIndices.forEach(idx => { filesArray[idx].groupId = currentGroupId; });
-        groups.push({ id: currentGroupId, indices: [...selectedIndices] });
-        currentGroupId++;
-        selectedIndices = [];
-        renderGrid();
-    }
-
-    async function exportZip() {
-        if (groups.length === 0) return alert('Önce gruplama yapmalısın.');
-        
-        // Inputlardan isimleri al ve temizle
-        let zipName = zipNameInput.value.trim();
-        if(!zipName) zipName = "manhwa_bolumleri";
-        
-        let folderName = folderNameInput.value.trim();
-
-        progressOverlay.style.display = 'flex';
-        pTitle.innerText = "Paneller Birleştiriliyor...";
-        pStatus.innerText = "İşlem başlatılıyor...";
-        pBar.style.width = '0%';
-        pPercent.innerText = '%0';
-
-        const zip = new JSZip();
-        
-        // Eğer bir iç klasör ismi yazıldıysa o klasörü oluşturup içine atacağız
-        let targetZipFolder = zip;
-        if(folderName) {
-            targetZipFolder = zip.folder(folderName);
+        function closePreviewSidebar() {
+            document.getElementById('previewSidebar').classList.add('hidden');
         }
 
-        const totalGroups = groups.length;
-        const delay = () => new Promise(res => setTimeout(res, 50));
+        async function updateLivePreview() {
+            const sidebar = document.getElementById('previewSidebar');
+            if (sidebar.classList.contains('hidden') || masterData.length === 0) return;
 
-        for (let g = 0; g < totalGroups; g++) {
-            let percent = Math.round((g / totalGroups) * 80);
-            pStatus.innerText = `Grup ${g + 1} / ${totalGroups} dikey olarak birleştiriliyor...`;
-            pBar.style.width = `${percent}%`;
-            pPercent.innerText = `%${percent}`;
-            await delay();
-
-            const group = groups[g];
-            const groupItems = group.indices.map(idx => filesArray[idx]);
-            const imgElements = await Promise.all(groupItems.map(item => {
-                return new Promise((resolve) => {
-                    const img = new Image(); img.src = item.src; img.onload = () => resolve(img);
-                });
-            }));
-
-            const maxWidth = imgElements[0].width;
-            let totalHeight = 0;
-            imgElements.forEach(img => { totalHeight += img.height * (maxWidth / img.width); });
-
-            const canvas = document.createElement('canvas');
-            canvas.width = maxWidth; canvas.height = totalHeight;
+            const canvas = document.getElementById('livePreviewCanvas');
             const ctx = canvas.getContext('2d');
 
-            let currentY = 0;
-            imgElements.forEach(img => {
-                const finalHeight = img.height * (maxWidth / img.width);
-                ctx.drawImage(img, 0, currentY, maxWidth, finalHeight);
-                currentY += finalHeight;
-            });
-
-            const outputName = String(g + 1).padStart(3, '0') + '.webp';
-            await new Promise((resolve) => {
-                canvas.toBlob((blob) => { 
-                    // Belirlenen hedef klasöre yazılıyor
-                    targetZipFolder.file(outputName, blob); 
-                    resolve(); 
-                }, 'image/webp', 0.9);
-            });
-        }
-
-        pTitle.innerText = "ZIP Paketi Oluşturuluyor...";
-        pStatus.innerText = "Görseller paket haline getiriliyor, lütfen bekleyin...";
-        pBar.style.width = '85%';
-        pPercent.innerText = '%85';
-        await delay();
-
-        zip.generateAsync({type: "blob"}, function updateCallback(metadata) {
-            let zipPercent = 85 + Math.round((metadata.percent / 100) * 15);
-            if(zipPercent > 100) zipPercent = 100;
-            pBar.style.width = `${zipPercent}%`;
-            pPercent.innerText = `%${zipPercent}`;
-        }).then(function(content) {
-            pStatus.innerText = "İndirme başlatılıyor!";
+            // Havuzdaki ilk resmi baz al
+            const sampleImg = new Image();
+            sampleImg.src = masterData[0].src;
             
-            const downloadLink = document.createElement('a');
-            downloadLink.href = URL.createObjectURL(content);
-            // Dinamik olarak girilen dosya adını verdik
-            downloadLink.download = `${zipName}.zip`;
-            downloadLink.click();
+            await new Promise(res => sampleImg.onload = res);
 
-            setTimeout(() => {
-                progressOverlay.style.display = 'none';
-            }, 800);
-        });
-    }
+            canvas.width = sampleImg.width;
+            canvas.height = sampleImg.height;
 
-    function resetAll() {
-        if(confirm("Sıfırlansın mı kanka?")) {
-            filesArray = []; selectedIndices = []; groups = []; currentGroupId = 1; focusedIndex = 0; lastSelectedIndex = null;
-            imageGrid.innerHTML = ''; fileInput.value = ''; zipNameInput.value = ''; folderNameInput.value = '';
-        }
-    }
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(sampleImg, 0, 0);
 
-    // Input alanlarına odaklanıldığında klavye kısayollarının tetiklenmesini engellemek için önlem
-    zipNameInput.addEventListener('keydown', (e) => e.stopPropagation());
-    folderNameInput.addEventListener('keydown', (e) => e.stopPropagation());
-
-    window.addEventListener('keydown', (e) => {
-        if (filesArray.length === 0) return;
-        let key = e.key.toLowerCase();
-        
-        if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            if (focusedIndex < filesArray.length - 1) focusedIndex++;
-            renderGrid();
-        } 
-        else if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            if (focusedIndex > 0) focusedIndex--;
-            renderGrid();
-        } 
-        else if (e.key === ' ') {
-            e.preventDefault();
-            if (e.shiftKey && lastSelectedIndex !== null) {
-                handleShiftSelect(focusedIndex);
-            } else {
-                toggleSelect(focusedIndex);
+            // Eğer Converter modundaysak gri temizleyiciyi (Levels) de ön izlemede simüle et
+            if(engineActiveMode === 'converter') {
+                applyLevelsOnly(ctx, canvas.width, canvas.height);
             }
-            renderGrid();
-        } 
-        else if (key === 'g') { makeGroup(); } 
-        else if (key === 'z') { exportZip(); } 
-        else if (key === 'c') { resetAll(); }
-    });
 
-    btnGroup.addEventListener('click', makeGroup);
-    btnExport.addEventListener('click', exportZip);
-    btnClear.addEventListener('click', resetAll);
-</script>
+            // Watermark'ı enjekte et
+            injectWatermark(ctx, canvas.width, canvas.height);
+        }
+
+        // RENKLERİ KORUYAN LEVELS MOTORU
+function applyLevelsOnly(ctx, w, h) {
+    let bVal = parseInt(document.getElementById('lvlBlack').value);
+    let wVal = parseInt(document.getElementById('lvlWhite').value);
+    
+    // bVal ve wVal'ı 0-255 aralığına normalize et
+    let b = bVal;
+    let w_point = wVal;
+
+    let imgData = ctx.getImageData(0, 0, w, h);
+    let data = imgData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+        // Her kanal için (R, G, B) ayrı ayrı işlem yapıyoruz
+        for (let j = 0; j < 3; j++) {
+            let val = data[i + j];
+            
+            // Levels formülü: (değer - siyah) / (beyaz - siyah) * 255
+            val = ((val - b) / (w_point - b)) * 255;
+            
+            // Sınırları 0-255 arasında tut
+            data[i + j] = Math.min(255, Math.max(0, val));
+        }
+        // Alpha (data[i+3]) kanalına dokunmuyoruz, şeffaflık bozulmasın
+    }
+    ctx.putImageData(imgData, 0, 0);
+}
+
+        function injectWatermark(ctx, canvasW, canvasH) {
+            if(!watermarkImgData) return;
+            
+            const mode = document.getElementById('wmMode').value;
+            const alignX = document.getElementById('wmAlignX').value;
+            const margin = parseInt(document.getElementById('wmMargin').value) || 0;
+            const interval = parseInt(document.getElementById('wmInterval').value) || 2000;
+
+            const wmImg = new Image();
+            wmImg.src = watermarkImgData;
+            if(!wmImg.complete) return; 
+
+            ctx.save();
+            let opacity = parseFloat(document.getElementById('wmOpacity').value) / 100;
+            ctx.globalAlpha = opacity;
+
+            let scale = (canvasW * 0.35) / wmImg.width;
+            let wmW = wmImg.width * scale;
+            let wmH = wmImg.height * scale;
+
+            function getXPosition() {
+                if (alignX === 'left') return margin;
+                if (alignX === 'right') return canvasW - wmW - margin;
+                return (canvasW - wmW) / 2;
+            }
+
+            let targetX = getXPosition();
+
+            if(mode === "center") {
+                let targetY = (canvasH - wmH) / 2;
+                ctx.drawImage(wmImg, targetX, targetY, wmW, wmH);
+            } else if(mode === "repeat") {
+                let currentY = interval;
+                while(currentY < canvasH) {
+                    ctx.drawImage(wmImg, targetX, currentY - (wmH / 2), wmW, wmH);
+                    currentY += interval;
+                }
+            }
+            ctx.restore();
+        }
+
+        function applyLevelsAndProtection(ctx, w, h, targetFormat) {
+            if(targetFormat === "image/jpeg") {
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, w, h);
+                ctx.globalCompositeOperation = 'source-over';
+            }
+
+            if(engineActiveMode === 'converter') {
+                applyLevelsOnly(ctx, w, h);
+            }
+        }
+
+        function packAndShip(zip, archiveName) {
+            showMatrixProgress("ARŞİVLENİYOR", "Paket mühürleniyor...", 85);
+            zip.generateAsync({type: "blob"}).then(function(content) {
+                const anchor = document.createElement('a');
+                anchor.href = URL.createObjectURL(content);
+                anchor.download = `${archiveName}.zip`;
+                anchor.click();
+                setTimeout(() => document.getElementById('matrixOverlay').classList.add('hidden'), 500);
+            });
+        }
+
+        // ================= MOTOR SÜRÜCÜLERİ =================
+
+        async function compileMerger() {
+            if (designGroups.length === 0) return;
+            let zipName = document.getElementById('mZipName').value.trim() || "birlesmis_bolum_panelleri";
+            const zip = new JSZip();
+
+            for (let g = 0; g < designGroups.length; g++) {
+                showMatrixProgress("BİRLEŞTİRİLİYOR", `Grup: ${g + 1}/${designGroups.length}`, Math.round((g / designGroups.length) * 80));
+                const targets = designGroups[g].mapping.map(i => masterData[i]);
+                const loadedImgs = await Promise.all(targets.map(t => new Promise(res => { const img = new Image(); img.src = t.src; img.onload = () => res(img); })));
+
+                const baseWidth = loadedImgs[0].width;
+                let dynamicHeight = 0;
+                loadedImgs.forEach(img => dynamicHeight += img.height * (baseWidth / img.width));
+
+                const canvas = document.createElement('canvas'); canvas.width = baseWidth; canvas.height = dynamicHeight;
+                const ctx = canvas.getContext('2d');
+                let currentOffset = 0;
+                
+                loadedImgs.forEach(img => {
+                    const calculatedH = img.height * (baseWidth / img.width);
+                    ctx.drawImage(img, 0, currentOffset, baseWidth, calculatedH); currentOffset += calculatedH;
+                });
+
+                await new Promise(res => canvas.toBlob(blob => { zip.file(`${String(g + 1).padStart(3, '0')}.webp`, blob); res(); }, 'image/webp', 0.92));
+            }
+            packAndShip(zip, zipName);
+        }
+
+        async function compileSplitter() {
+            if(masterData.length === 0) return;
+            let limitH = parseInt(document.getElementById('sHeight').value) || 3000;
+            let archiveName = document.getElementById('sZipName').value.trim() || "dilimlenmis_webtoon_bolumu";
+            const zip = new JSZip();
+            let indexMarker = 1;
+
+            for(let i=0; i<masterData.length; i++) {
+                showMatrixProgress("DİLİMLENİYOR", `Bölüm kesiliyor: ${i+1}`, Math.round((i / masterData.length) * 80));
+                const img = await new Promise(res => { const im = new Image(); im.src = masterData[i].src; im.onload = () => res(im); });
+                
+                let trackerY = 0;
+                while(trackerY < img.height) {
+                    let currentSliceH = Math.min(limitH, img.height - trackerY);
+                    const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = currentSliceH;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, trackerY, img.width, currentSliceH, 0, 0, img.width, currentSliceH);
+
+                    await new Promise(res => canvas.toBlob(blob => {
+                        zip.file(`${String(indexMarker).padStart(3, '0')}.webp`, blob); indexMarker++; res();
+                    }, 'image/webp', 0.92));
+                    trackerY += limitH;
+                }
+            }
+            packAndShip(zip, archiveName);
+        }
+
+        async function compileConverter() {
+            if(masterData.length === 0) return;
+            let format = document.getElementById('cTargetFormat').value;
+            let zipName = document.getElementById('cZipName').value.trim() || "donusturulmus_sayfalar";
+            let ext = format === "image/jpeg" ? ".jpg" : (format === "image/png" ? ".png" : ".webp");
+
+            const zip = new JSZip();
+
+            for(let i=0; i<masterData.length; i++) {
+                showMatrixProgress("TEMİZLENİYOR_VE_KODLANIYOR", `İşlem: ${i+1}/${masterData.length}`, Math.round((i / masterData.length) * 80));
+                const img = await new Promise(res => { const im = new Image(); im.src = masterData[i].src; im.onload = () => res(im); });
+                
+                const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                applyLevelsAndProtection(ctx, img.width, img.height, format);
+                
+                let cleanName = masterData[i].name.substring(0, masterData[i].name.lastIndexOf('.')) || masterData[i].name;
+                await new Promise(res => canvas.toBlob(blob => { zip.file(`${cleanName}${ext}`, blob); res(); }, format, 0.90));
+            }
+            packAndShip(zip, zipName);
+        }
+
+        async function compileRenamer() {
+            if(masterData.length === 0) return;
+            let paddingSize = parseInt(document.getElementById('rPadding').value);
+            const zip = new JSZip();
+
+            for(let i=0; i<masterData.length; i++) {
+                const img = await new Promise(res => { const im = new Image(); im.src = masterData[i].src; im.onload = () => res(im); });
+                const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                let compiledName = String(i + 1).padStart(paddingSize, '0') + ".webp";
+                await new Promise(res => canvas.toBlob(blob => { zip.file(compiledName, blob); res(); }, 'image/webp', 0.92));
+            }
+            packAndShip(zip, "sirali_sayfalar");
+        }
+
+        async function compileWatermarkOnly() {
+            if(masterData.length === 0) { alert("Havuzda işlenecek dosya yok kanka!"); return; }
+            if(!watermarkImgData) { alert("Önce bir logo dosyası seçmelisin!"); return; }
+            
+            let zipName = document.getElementById('wZipName').value.trim() || "watermarkli_sayfalar";
+            const zip = new JSZip();
+
+            for(let i=0; i<masterData.length; i++) {
+                showMatrixProgress("WATERMARK_BASILIYOR", `Damgalanıyor: ${i+1}/${masterData.length}`, Math.round((i / masterData.length) * 80));
+                const img = await new Promise(res => { const im = new Image(); im.src = masterData[i].src; im.onload = () => res(im); });
+                
+                const canvas = document.createElement('canvas'); canvas.width = img.width; canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                injectWatermark(ctx, img.width, img.height);
+                
+                let cleanName = masterData[i].name.substring(0, masterData[i].name.lastIndexOf('.')) || masterData[i].name;
+                await new Promise(res => canvas.toBlob(blob => { zip.file(`${cleanName}_wm.webp`, blob); res(); }, 'image/webp', 0.92));
+            }
+            packAndShip(zip, zipName);
+        }
+
+        function wipeCore() {
+            if(wipeCoreConfirm()) {
+                saveHistorySnapshot();
+                masterData = []; selectedIndices = []; designGroups = []; currentGroupCounter = 1; lastSelectedIndex = null; watermarkImgData = null;
+                localStorage.removeItem('scanlation_toolkit_autosave');
+                document.getElementById('masterGrid').innerHTML = '';
+                document.getElementById('universal-loader').value = '';
+                if(document.getElementById('watermark-loader')) document.getElementById('watermark-loader').value = '';
+                document.getElementById('wm-label').innerText = "Logo Seç (PNG/Transparan)";
+                closePreviewSidebar();
+                renderWorkspace();
+            }
+        }
+        function wipeCoreConfirm() {
+            return confirm("Mevcut işlem havuzu ve yerel kurtarma hafızası sıfırlansın mı kanka?");
+        }
+        function resetLevels() {
+    document.getElementById('lvlBlack').value = 0;
+    document.getElementById('lvlWhite').value = 255;
+    updateLivePreview(); // Değişiklikten sonra ön izlemeyi anlık tazele
+}
+    </script>
 </body>
 </html>
