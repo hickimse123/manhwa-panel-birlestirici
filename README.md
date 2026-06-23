@@ -25,5 +25,8 @@ Scanlation ekipleri ve webtoon okurları için geliştirilmiş, dikey manhwa pan
 3. **Ayarları Yapın:** ZIP dosya adını ve isterseniz ZIP içindeki klasör adını girin.
 4. **İndirin:** `Z` tuşuna veya indirme butonuna basarak dikey olarak birleştirilmiş `.webp` panellerinizi anında ZIP olarak indirin.
 
+![Uygulama Arayüzü](gruplama.webp)
+![Birleştirme Ekranı](birlestirme.webp)
+
 ---
 Created by **Hic Kimse** 🚀
