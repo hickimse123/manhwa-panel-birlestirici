@@ -4,9 +4,12 @@ Scanlation ekipleri ve webtoon okurları için geliştirilmiş, dikey manhwa pan
 
 ---
 
-### 🌐 Canlı Uygulama Linki / Live Demo
-> 🚀 **Aracı hemen tarayıcınızda kullanmak için tıklayın:**  
-> **[Canlı Deneme Linki](https://hickimse123.github.io/manhwa-panel-birlestirici/)**
+### 🌐 Canlı Uygulama & İndirme Seçenekleri
+> 🚀 **Aracı tarayıcınızda canlı kullanmak için tıklayın:**  
+> **[Uygulamayı Canlı Aç (GitHub Pages)](https://hickimse123.github.io/manhwa-panel-birlestirici/)**
+>
+> 💾 **İnternetsiz (Çevrimdışı) kullanmak için direkt bilgisayarınıza indirin:**  
+> **[index.html Dosyasını Direkt İndir (Sağ Tıkla -> Farklı Kaydet)](https://raw.githubusercontent.com/hickimse123/manhwa-panel-birlestirici/main/index.html)**
 
 ---
 
