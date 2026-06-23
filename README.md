@@ -1,6 +1,14 @@
-# 🗺️ Manhwa Panel Merger & ZIP Packager (V1)
+# 🗺️ Manhwa Panel Merger & ZIP Packager (V11)
 
 Scanlation ekipleri ve webtoon okurları için geliştirilmiş, dikey manhwa panellerini akıllıca gruplayıp birleştiren ve tek tıkla ZIP formatında indiren **ultra modern, tarayıcı tabanlı** bir araçtır.
+
+---
+
+### 🌐 Canlı Uygulama Linki / Live Demo
+> 🚀 **Aracı hemen tarayıcınızda kullanmak için tıklayın:**  
+> **[Canlı Deneme Linki](https://hickimse123.github.io/manhwa-panel-birlestirici/)**
+
+---
 
 ## 🚀 Öne Çıkan Özellikler
 
