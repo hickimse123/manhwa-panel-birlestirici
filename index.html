@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Manhwa Panel Birleştirici & ZIP Paketleyici (V11 - Akıllı İsimlendirme)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #0f0f12;
+            --bg-card: #181820;
+            --bg-control: #1e1e26;
+            --accent-green: #00e676;
+            --accent-blue: #00b0ff;
+            --accent-orange: #ff9100;
+            --accent-red: #ff1744;
+            --text-main: #f5f5f7;
+            --text-sub: #8e8e93;
+        }
+
+        body { 
+            font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg-main); 
+            color: var(--text-main); 
+            margin: 0;
+            padding: 30px 20px;
+            display: flex; 
+            flex-direction: column; 
+            min-height: 93vh; 
+        }
+
+        h1 { 
+            text-align: center; 
+            color: var(--text-main); 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 5px; 
+            background: linear-gradient(135deg, #fff 0%, var(--text-sub) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle { 
+            text-align: center; 
+            color: var(--text-sub); 
+            margin-bottom: 30px; 
+            font-size: 14px; 
+        }
+
+        .container { max-width: 1300px; margin: 0 auto; flex: 1; width: 100%; }
+        
+        .shortcuts-top { 
+            background: rgba(30, 30, 38, 0.6); 
+            backdrop-filter: blur(10px);
+            padding: 14px; 
+            border-radius: 12px; 
+            margin-bottom: 20px; 
+            font-size: 13px; 
+            color: #d1d1d6; 
+            display: flex; 
+            gap: 25px; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        
+        .key { 
+            background: rgba(255, 255, 255, 0.1); 
+            color: #fff; 
+            padding: 3px 8px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 12px; 
+            margin-right: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Kontrol Paneli */
+        .controls { 
+            background: var(--bg-control); 
+            padding: 20px; 
+            border-radius: 14px; 
+            margin-bottom: 25px; 
+            display: flex; 
+            gap: 15px; 
+            align-items: center; 
+            flex-wrap: wrap;
+            border: 1px solid rgba(255,255,255,0.03);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        /* Yeni İsimlendirme Input Alanları */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 220px;
+        }
+        
+        .input-group label {
+            font-size: 11px;
+            color: var(--text-sub);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .text-input {
+            background: #121216;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 11px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .text-input:focus {
+            border-color: var(--accent-blue);
+        }
+
+        input[type="file"] { display: none; }
+        
+        /* Butonlar */
+        .btn { 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            font-size: 14px; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            height: 40px;
+            box-sizing: border-box;
+            margin-top: 16px; /* Inputların hizasına uyması için */
+        }
+        
+        .btn-upload { background: linear-gradient(135deg, #2ef784 0%, #00c853 100%); color: #000; }
+        .btn-upload:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,230,118,0.3); }
+        
+        .btn-group { background: linear-gradient(135deg, var(--accent-blue) 0%, #0091ea 100%); }
+        .btn-group:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,176,255,0.3); }
+        
+        .btn-download { background: linear-gradient(135deg, var(--accent-orange) 0%, #ff6d00 100%); }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,145,0,0.3); }
+        
+        .btn-clear { background: rgba(255, 23, 68, 0.1); color: var(--accent-red); border: 1px solid rgba(255, 23, 68, 0.2); margin-left: auto; }
+        .btn-clear:hover { background: var(--accent-red); color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,23,68,0.3); }
+        
+        /* Izgara Düzeni ve Kartlar */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 20px; 
+            background: var(--bg-control); 
+            padding: 25px; 
+            border-radius: 16px; 
+            min-height: 250px;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .img-card { 
+            background: var(--bg-card); 
+            padding: 10px; 
+            border-radius: 12px; 
+            text-align: center; 
+            cursor: pointer; 
+            user-select: none; 
+            border: 2px solid transparent; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .img-card img { 
+            max-width: 100%; 
+            max-height: 140px; 
+            object-fit: contain; 
+            border-radius: 8px; 
+        }
+
+        .img-card p { 
+            margin: 8px 0 2px 0; 
+            font-size: 11px; 
+            font-weight: 500;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            color: #aeaea3; 
+        }
+        
+        .img-card.focused { 
+            border-color: var(--accent-blue) !important; 
+            transform: translateY(-4px); 
+            box-shadow: 0 8px 25px rgba(0, 176, 255, 0.4); 
+            z-index: 2; 
+        }
+        
+        .img-card.selected { 
+            border-color: #ffffff !important; 
+            background: #2c2c38;
+            transform: scale(1.03); 
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .badge { 
+            display: inline-block; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-top: 6px; 
+            padding: 3px 8px; 
+            border-radius: 6px; 
+            background: rgba(0,0,0,0.5); 
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* DİNAMİK POP-UP & PROGRESS BAR TASARIMI */
+        .progress-overlay { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(5, 5, 8, 0.85); 
+            backdrop-filter: blur(8px);
+            z-index: 9999; 
+            justify-content: center; 
+            align-items: center; 
+        }
+
+        .progress-modal { 
+            background: #1c1c24; 
+            padding: 35px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.08); 
+            width: 420px; 
+            text-align: center; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
+        }
+
+        .progress-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--accent-green); }
+        .progress-status { font-size: 13px; color: var(--text-sub); margin-bottom: 25px; height: 18px; }
+        
+        .progress-bg { 
+            background: #0d0d11; 
+            width: 100%; 
+            height: 12px; 
+            border-radius: 6px; 
+            overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.05); 
+            margin-bottom: 15px; 
+            position: relative; 
+        }
+
+        .progress-bar { 
+            background: linear-gradient(90deg, #00e676, #b9f6ca); 
+            width: 0%; 
+            height: 100%; 
+            border-radius: 6px;
+            transition: width 0.1s ease; 
+        }
+
+        .progress-percent { font-size: 26px; font-weight: 800; color: #fff; }
+
+        /* KREASYON İMZASI STİLİ */
+        .footer { 
+            text-align: center; 
+            color: #444452; 
+            font-size: 12px; 
+            margin-top: 50px; 
+            margin-bottom: 10px; 
+            font-style: italic; 
+            letter-spacing: 1px; 
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        .footer:hover { color: var(--accent-blue); }
+
+        /* Grup Renkleri */
+        .g-color-1 { background-color: #1b3d24 !important; border-color: var(--accent-green) !important; }
+        .g-color-2 { background-color: #16325c !important; border-color: var(--accent-blue) !important; }
+        .g-color-3 { background-color: #5c4308 !important; border-color: var(--accent-orange) !important; }
+        .g-color-4 { background-color: #541031 !important; border-color: #ff4081 !important; }
+        .g-color-5 { background-color: #310d54 !important; border-color: #e040fb !important; }
+        .g-color-6 { background-color: #064042 !important; border-color: #00e5ff !important; }
+        .g-color-7 { background-color: #381e18 !important; border-color: #ff6e40 !important; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Manhwa Panel Birleştirici</h1>
+    <div class="subtitle">Panelleri Grupla, Dikey Birleştir ve Tek Tıkla ZIP Olarak İndir</div>
+    
+    <div class="shortcuts-top">
+        <div><span class="key">Mouse Tık</span> Başlangıç Seç (Beyaz)</div>
+        <div><span class="key">Mouse Gezdirme</span> Bitiş Noktası (<span style="color:var(--accent-blue); font-weight:bold;">Mavi Parlama</span>)</div>
+        <div><span class="key">Shift + Space</span> Aralığı Komple Kapat</div>
+        <div><span class="key">G</span> Grup Yap</div>
+        <div><span class="key">Z</span> Birleştir ve ZIP İndir</div>
+        <div><span class="key">C</span> Sıfırla</div>
+    </div>
+
+    <div class="controls">
+        <label class="btn btn-upload">
+            Görselleri Seç
+            <input type="file" id="fileInput" multiple accept="image/*">
+        </label>
+        
+        <button class="btn btn-group" id="btnGroup">Seçilenleri Grup Yap (G)</button>
+
+        <!-- YENİ ZIP İSMİ INPUT ALANI -->
+        <div class="input-group">
+            <label for="zipNameInput">ZIP Dosya Adı</label>
+            <input type="text" id="zipNameInput" class="text-input" placeholder="manhwa_bolumleri">
+        </div>
+
+        <!-- YENİ KLASÖR ADI INPUT ALANI -->
+        <div class="input-group">
+            <label for="folderNameInput">ZIP İçi Klasör Adı (Opsiyonel)</label>
+            <input type="text" id="folderNameInput" class="text-input" placeholder="Direkt kök dizine çıkar">
+        </div>
+
+        <button class="btn btn-download" id="btnExport">Birleştir ve ZIP (Z)</button>
+        <button class="btn btn-clear" id="btnClear">Sıfırla (C)</button>
+    </div>
+
+    <div class="grid" id="imageGrid"></div>
+</div>
+
+<div class="progress-overlay" id="progressOverlay">
+    <div class="progress-modal">
+        <div class="progress-title" id="pTitle">Dosyalar Hazırlanıyor...</div>
+        <div class="progress-status" id="pStatus">İşlem başlatılıyor...</div>
+        <div class="progress-bg">
+            <div class="progress-bar" id="pBar"></div>
+        </div>
+        <div class="progress-percent" id="pPercent">%0</div>
+    </div>
+</div>
+
+<div class="footer">
+    Hic Kimse tarafından oluşturuldu
+</div>
+
+<script>
+    let filesArray = [];
+    let selectedIndices = [];
+    let groups = [];
+    let currentGroupId = 1;
+    let focusedIndex = 0;
+    let lastSelectedIndex = null;
+
+    const fileInput = document.getElementById('fileInput');
+    const imageGrid = document.getElementById('imageGrid');
+    const btnGroup = document.getElementById('btnGroup');
+    const btnExport = document.getElementById('btnExport');
+    const btnClear = document.getElementById('btnClear');
+    const zipNameInput = document.getElementById('zipNameInput');
+    const folderNameInput = document.getElementById('folderNameInput');
+
+    const progressOverlay = document.getElementById('progressOverlay');
+    const pStatus = document.getElementById('pStatus');
+    const pBar = document.getElementById('pBar');
+    const pPercent = document.getElementById('pPercent');
+    const pTitle = document.getElementById('pTitle');
+
+    function naturalSort(a, b) {
+        const ax = [], bx = [];
+        a.name.replace(/(\d+)|(\D+)/g, function(_, $1, $2) { ax.push([$1 || Infinity, $2 || ""]); });
+        b.name.replace(/(\d+)|(\D+)/g, function(_, $1, $2) { bx.push([$1 || Infinity, $2 || ""]); });
+        while(ax.length && bx.length) {
+            const an = ax.shift(); const bn = bx.shift();
+            const nn = (an[0] - bn[0]) || an[1].localeCompare(bn[1]);
+            if(nn) return nn;
+        }
+        return ax.length - bx.length;
+    }
+
+    fileInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        let loadedCount = 0;
+        filesArray = []; selectedIndices = []; groups = []; currentGroupId = 1; focusedIndex = 0; lastSelectedIndex = null;
+        
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                filesArray.push({ name: file.name, src: event.target.result, groupId: null });
+                loadedCount++;
+                if (loadedCount === files.length) {
+                    filesArray.sort(naturalSort);
+                    renderGrid();
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    function renderGrid() {
+        imageGrid.innerHTML = '';
+        filesArray.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'img-card';
+            
+            if (item.groupId) {
+                const colorNum = ((item.groupId - 1) % 7) + 1;
+                card.classList.add(`g-color-${colorNum}`);
+            }
+            if (selectedIndices.includes(index)) card.classList.add('selected');
+            if (index === focusedIndex && filesArray.length > 0 && !selectedIndices.includes(index)) {
+                card.classList.add('focused');
+            }
+
+            card.innerHTML = `
+                <img src="${item.src}">
+                <p title="${item.name}">${item.name}</p>
+                ${item.groupId ? `<span class="badge">Grup ${item.groupId}</span>` : ''}
+            `;
+
+            card.addEventListener('click', () => {
+                if (item.groupId) return;
+                focusedIndex = index;
+                toggleSelect(index);
+                renderGrid();
+            });
+
+            card.addEventListener('mouseover', () => {
+                if (!item.groupId && focusedIndex !== index) {
+                    focusedIndex = index;
+                    updateFocusStyles();
+                }
+            });
+
+            imageGrid.appendChild(card);
+        });
+    }
+
+    function updateFocusStyles() {
+        const cards = imageGrid.querySelectorAll('.img-card');
+        cards.forEach((card, index) => {
+            if (index === focusedIndex && !selectedIndices.includes(index)) {
+                card.classList.add('focused');
+            } else {
+                card.classList.remove('focused');
+            }
+        });
+    }
+
+    function toggleSelect(index) {
+        if (filesArray[index].groupId) return;
+        if (selectedIndices.includes(index)) {
+            selectedIndices = selectedIndices.filter(i => i !== index);
+            if (lastSelectedIndex === index) lastSelectedIndex = null;
+        } else {
+            selectedIndices.push(index);
+            lastSelectedIndex = index;
+        }
+    }
+
+    function handleShiftSelect(endIndex) {
+        let start = Math.min(lastSelectedIndex, endIndex);
+        let end = Math.max(lastSelectedIndex, endIndex);
+        for (let i = start; i <= end; i++) {
+            if (!filesArray[i].groupId && !selectedIndices.includes(i)) {
+                selectedIndices.push(i);
+            }
+        }
+    }
+
+    function makeGroup() {
+        if (selectedIndices.length === 0) return alert('Önce resim seç kanka!');
+        selectedIndices.sort((a, b) => a - b);
+        selectedIndices.forEach(idx => { filesArray[idx].groupId = currentGroupId; });
+        groups.push({ id: currentGroupId, indices: [...selectedIndices] });
+        currentGroupId++;
+        selectedIndices = [];
+        renderGrid();
+    }
+
+    async function exportZip() {
+        if (groups.length === 0) return alert('Önce gruplama yapmalısın.');
+        
+        // Inputlardan isimleri al ve temizle
+        let zipName = zipNameInput.value.trim();
+        if(!zipName) zipName = "manhwa_bolumleri";
+        
+        let folderName = folderNameInput.value.trim();
+
+        progressOverlay.style.display = 'flex';
+        pTitle.innerText = "Paneller Birleştiriliyor...";
+        pStatus.innerText = "İşlem başlatılıyor...";
+        pBar.style.width = '0%';
+        pPercent.innerText = '%0';
+
+        const zip = new JSZip();
+        
+        // Eğer bir iç klasör ismi yazıldıysa o klasörü oluşturup içine atacağız
+        let targetZipFolder = zip;
+        if(folderName) {
+            targetZipFolder = zip.folder(folderName);
+        }
+
+        const totalGroups = groups.length;
+        const delay = () => new Promise(res => setTimeout(res, 50));
+
+        for (let g = 0; g < totalGroups; g++) {
+            let percent = Math.round((g / totalGroups) * 80);
+            pStatus.innerText = `Grup ${g + 1} / ${totalGroups} dikey olarak birleştiriliyor...`;
+            pBar.style.width = `${percent}%`;
+            pPercent.innerText = `%${percent}`;
+            await delay();
+
+            const group = groups[g];
+            const groupItems = group.indices.map(idx => filesArray[idx]);
+            const imgElements = await Promise.all(groupItems.map(item => {
+                return new Promise((resolve) => {
+                    const img = new Image(); img.src = item.src; img.onload = () => resolve(img);
+                });
+            }));
+
+            const maxWidth = imgElements[0].width;
+            let totalHeight = 0;
+            imgElements.forEach(img => { totalHeight += img.height * (maxWidth / img.width); });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = maxWidth; canvas.height = totalHeight;
+            const ctx = canvas.getContext('2d');
+
+            let currentY = 0;
+            imgElements.forEach(img => {
+                const finalHeight = img.height * (maxWidth / img.width);
+                ctx.drawImage(img, 0, currentY, maxWidth, finalHeight);
+                currentY += finalHeight;
+            });
+
+            const outputName = String(g + 1).padStart(3, '0') + '.webp';
+            await new Promise((resolve) => {
+                canvas.toBlob((blob) => { 
+                    // Belirlenen hedef klasöre yazılıyor
+                    targetZipFolder.file(outputName, blob); 
+                    resolve(); 
+                }, 'image/webp', 0.9);
+            });
+        }
+
+        pTitle.innerText = "ZIP Paketi Oluşturuluyor...";
+        pStatus.innerText = "Görseller paket haline getiriliyor, lütfen bekleyin...";
+        pBar.style.width = '85%';
+        pPercent.innerText = '%85';
+        await delay();
+
+        zip.generateAsync({type: "blob"}, function updateCallback(metadata) {
+            let zipPercent = 85 + Math.round((metadata.percent / 100) * 15);
+            if(zipPercent > 100) zipPercent = 100;
+            pBar.style.width = `${zipPercent}%`;
+            pPercent.innerText = `%${zipPercent}`;
+        }).then(function(content) {
+            pStatus.innerText = "İndirme başlatılıyor!";
+            
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(content);
+            // Dinamik olarak girilen dosya adını verdik
+            downloadLink.download = `${zipName}.zip`;
+            downloadLink.click();
+
+            setTimeout(() => {
+                progressOverlay.style.display = 'none';
+            }, 800);
+        });
+    }
+
+    function resetAll() {
+        if(confirm("Sıfırlansın mı kanka?")) {
+            filesArray = []; selectedIndices = []; groups = []; currentGroupId = 1; focusedIndex = 0; lastSelectedIndex = null;
+            imageGrid.innerHTML = ''; fileInput.value = ''; zipNameInput.value = ''; folderNameInput.value = '';
+        }
+    }
+
+    // Input alanlarına odaklanıldığında klavye kısayollarının tetiklenmesini engellemek için önlem
+    zipNameInput.addEventListener('keydown', (e) => e.stopPropagation());
+    folderNameInput.addEventListener('keydown', (e) => e.stopPropagation());
+
+    window.addEventListener('keydown', (e) => {
+        if (filesArray.length === 0) return;
+        let key = e.key.toLowerCase();
+        
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            if (focusedIndex < filesArray.length - 1) focusedIndex++;
+            renderGrid();
+        } 
+        else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            if (focusedIndex > 0) focusedIndex--;
+            renderGrid();
+        } 
+        else if (e.key === ' ') {
+            e.preventDefault();
+            if (e.shiftKey && lastSelectedIndex !== null) {
+                handleShiftSelect(focusedIndex);
+            } else {
+                toggleSelect(focusedIndex);
+            }
+            renderGrid();
+        } 
+        else if (key === 'g') { makeGroup(); } 
+        else if (key === 'z') { exportZip(); } 
+        else if (key === 'c') { resetAll(); }
+    });
+
+    btnGroup.addEventListener('click', makeGroup);
+    btnExport.addEventListener('click', exportZip);
+    btnClear.addEventListener('click', resetAll);
+</script>
+</body>
+</html>
