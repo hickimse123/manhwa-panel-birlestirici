@@ -784,6 +784,33 @@ function applyLevelsOnly(ctx, w, h) {
     document.getElementById('lvlWhite').value = 255;
     updateLivePreview(); // Değişiklikten sonra ön izlemeyi anlık tazele
 }
+// --- SÜRÜKLE BIRAK SİSTEMİ ---
+const dropZone = document.getElementById('masterGrid');
+
+// Sürükleme başladığında görsel efekt
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-custom-yellow');
+    dropZone.classList.add('bg-[#ecec00]/5');
+});
+
+// Sürükleme dışarı çıktığında efekti kaldır
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-custom-yellow');
+    dropZone.classList.remove('bg-[#ecec00]/5');
+});
+
+// Bırakıldığında dosyaları işle
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-custom-yellow');
+    dropZone.classList.remove('bg-[#ecec00]/5');
+
+    if (e.dataTransfer.files.length > 0) {
+        // Mevcut processFiles fonksiyonunu tetikle
+        processFiles({ target: { files: e.dataTransfer.files } });
+    }
+});
     </script>
 </body>
 </html>
